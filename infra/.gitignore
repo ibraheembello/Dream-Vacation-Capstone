@@ -1,0 +1,10 @@
+# Local Terraform working files. State is remote (S3), never committed.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.tfvars
+!*.tfvars.example

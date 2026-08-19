@@ -1,0 +1,38 @@
+name: CI
+
+# Umbrella CI that runs on every PR (and push) to main/dev regardless of which
+# files changed, so branch protection always has a status check to require.
+# The backend/ and frontend/ workflows handle the app's own lint/test/build.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  validate-infra:
+    name: Validate Terraform & shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+
+      - name: Terraform format check
+        working-directory: infra
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (no backend) & validate
+        working-directory: infra
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: ShellCheck all scripts
+        run: |
+          shopt -s nullglob
+          shellcheck scripts/*.sh deploy/*.sh infra/*.sh
