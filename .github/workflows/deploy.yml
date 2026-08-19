@@ -113,6 +113,7 @@ jobs:
       packages: read
     env:
       EC2_HOST: ${{ needs.terraform.outputs.ec2_ip }}
+      APP_DOMAIN: dream-vacations.duckdns.org
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -156,15 +157,21 @@ jobs:
 
       - name: Smoke-test the public endpoint
         run: |
-          echo "Waiting for the app to answer on http://$EC2_HOST/ ..."
-          # Host Nginx redirects 80 -> 443 once SSL is configured, so a 301/302
-          # is just as healthy as a 200 here. Follow redirects for the final check.
+          # Once SSL is set up the app answers over HTTPS on the domain, and the
+          # box redirects HTTP->HTTPS (returning 404 for requests by raw IP, which
+          # is expected). Test the domain over HTTPS first, then fall back to the
+          # IP over HTTP for the very first boot before a certificate exists.
+          echo "Checking https://$APP_DOMAIN/ ..."
           for i in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "http://$EC2_HOST/" || true)
-            echo "  attempt $i -> HTTP $code"
-            case "$code" in
-              200|301|302) echo "App is live (HTTP $code)"; exit 0 ;;
-            esac
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$APP_DOMAIN/" || true)
+            echo "  attempt $i -> HTTPS $code"
+            [ "$code" = "200" ] && { echo "App is live over HTTPS"; exit 0; }
             sleep 6
           done
+          echo "Falling back to http://$EC2_HOST/ (pre-SSL) ..."
+          code=$(curl -s -o /dev/null -w '%{http_code}' "http://$EC2_HOST/" || true)
+          echo "  IP over HTTP -> $code"
+          case "$code" in
+            200|301|302) echo "App is live (HTTP $code)"; exit 0 ;;
+          esac
           echo "App did not return a healthy status in time"; exit 1
