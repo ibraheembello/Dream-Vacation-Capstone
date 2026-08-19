@@ -25,8 +25,11 @@ resource "aws_key_pair" "dream" {
 }
 
 resource "aws_security_group" "dream" {
-  name        = "dream-sg"
-  description = "Allow SSH (22), HTTP (80) and HTTPS (443)"
+  name = "dream-sg"
+  # NOTE: changing this description would force-replace the whole SG (the field
+  # is immutable on AWS), which fails while the instance is attached. Keep it as
+  # is; new ports are added as ingress rules (an in-place update) instead.
+  description = "Allow SSH (22) and HTTP (80)"
   vpc_id      = aws_vpc.dream.id
 
   ingress {

@@ -35,4 +35,6 @@ jobs:
       - name: ShellCheck all scripts
         run: |
           shopt -s nullglob
-          shellcheck scripts/*.sh deploy/*.sh infra/*.sh
+          # SC1091: scripts source system files (e.g. /etc/os-release) that only
+          # exist on the target host, not in the repo. That is expected here.
+          shellcheck -e SC1091 scripts/*.sh deploy/*.sh infra/*.sh
