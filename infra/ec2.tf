@@ -85,6 +85,15 @@ resource "aws_instance" "dream" {
   tags = {
     Name = "dream-ec2"
   }
+
+  # The AMI data source uses most_recent, so Canonical publishing a newer image
+  # would otherwise replace this instance on the next apply and wipe the Nginx
+  # certificate and data. Ignore AMI (and user_data) drift so routine deploys
+  # never recreate the box. To intentionally rebuild it, use:
+  #   terraform apply -replace=aws_instance.dream
+  lifecycle {
+    ignore_changes = [ami, user_data]
+  }
 }
 
 resource "aws_eip" "dream" {

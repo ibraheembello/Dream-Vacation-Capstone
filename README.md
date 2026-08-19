@@ -334,6 +334,23 @@ That script requests the certificate, adds the HTTP to HTTPS redirect, and enabl
 `certbot.timer` for automatic twice-daily renewal. Renewal is verified with
 `certbot renew --dry-run`.
 
+Live certificate on the box:
+
+```text
+issuer=C = US, O = Let's Encrypt, CN = YE1
+subject=CN = dream-vacations.duckdns.org
+notBefore=Aug 19 16:41:56 2026 GMT
+notAfter=Nov 17 16:41:55 2026 GMT
+```
+
+```text
+$ curl -I https://dream-vacations.duckdns.org/
+HTTP/1.1 200 OK
+$ curl -I http://dream-vacations.duckdns.org/
+HTTP/1.1 301 Moved Permanently
+Location: https://dream-vacations.duckdns.org/
+```
+
 ---
 
 ## 🔑 Required GitHub secrets
